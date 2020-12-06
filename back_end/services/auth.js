@@ -114,6 +114,7 @@ client.connect((error) => {
         .then((result) => {
             if (result) {
                 res.cookie('accountId', result._id, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
+                res.cookie('username', req.body.username, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
                 return res.send(JSON.stringify({
                     success: true,
                     responseType: '/api/account/login',
@@ -159,6 +160,7 @@ client.connect((error) => {
             }));
         }
         res.clearCookie('accountId');
+        res.clearCookie('username');
         return res.send(JSON.stringify({
             success: true,
             responseType: '/api/account/logout',
