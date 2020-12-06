@@ -5,8 +5,9 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
 const redis = require('redis');
-const redisClient = redis.createClient({host: '18.191.127.85'});
+const multer = require('multer')
 
+const redisClient = redis.createClient({ host: '18.191.127.85' });
 const app = express();
 const port = 6000;
 
@@ -15,6 +16,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieparser());
 app.use(cors());
+//app.use(multer().single('image'));
 
 const url = 'mongodb://18.191.127.85:27017'
 const databaseName = 'csc667_final';
@@ -22,6 +24,17 @@ const usersCollectionName = 'users';
 const listingsCollectionName = 'listings';
 
 const client = new MongoClient(url);
+
+const imageStorageInfo = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, '../listingImages')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+
+const uploadImage = multer({ storage: imageStorageInfo })
 
 client.connect((error) => {
     if (error) {
@@ -36,12 +49,12 @@ client.connect((error) => {
 
     /*
     /api/listing/create
-    POST
+    POST (MUST SEND VIA FORM-DATA)
     required: itemName, type, picture, description, price
     */
-    app.post("/api/listing/create", (req, res) => {
+    app.post("/api/listing/create", uploadImage.single('image'), (req, res) => {
         if (!req.body.itemName || !req.body.type ||
-            !req.body.description || !req.body.price) {
+            !req.body.description || !req.body.price || !req.file) {
             return res.send(JSON.stringify({
                 success: false,
                 responseType: '/api/listing/create',
@@ -64,7 +77,7 @@ client.connect((error) => {
         }
 
         usersCollection.findOne(matcher)
-            .then( async (result) => {
+            .then(async (result) => {
                 if (!result) {
                     return res.send(JSON.stringify({
                         success: false,
@@ -81,8 +94,11 @@ client.connect((error) => {
                     type: req.body.type,
                     description: req.body.description,
                     price: req.body.price,
+                    image: "imageNameHash",
+                    status: "processing"
                 }
                 const newListingDb = await listingsCollection.insertOne(newListing);
+                // Send message to Kafka image processing service
                 redisClient.publish("services", JSON.stringify({
                     type: '/listing/create',
                     listingId: newListingDb.insertedId,
@@ -136,7 +152,7 @@ client.connect((error) => {
         }
 
         listingsCollection.find(matcher).toArray()
-            .then( async (result) => {
+            .then(async (result) => {
                 if (!result) {
                     return res.send(JSON.stringify({
                         success: false,
@@ -195,7 +211,7 @@ client.connect((error) => {
         }
 
         listingsCollection.findOne(matcher)
-            .then( async (result) => {
+            .then(async (result) => {
                 if (!result) {
                     return res.send(JSON.stringify({
                         success: false,
@@ -278,7 +294,7 @@ client.connect((error) => {
         }
 
         listingsCollection.findOne(matcher)
-            .then( async (result) => {
+            .then(async (result) => {
                 if (!result) {
                     return res.send(JSON.stringify({
                         success: false,
@@ -297,7 +313,7 @@ client.connect((error) => {
                         },
                     }));
                 }
-                const updater = {$set: {}}
+                const updater = { $set: {} }
                 if (req.body.itemName)
                     updater['$set']['itemName'] = req.body.itemName;
                 if (req.body.type)
@@ -306,7 +322,7 @@ client.connect((error) => {
                     updater['$set']['description'] = req.body.description;
                 if (req.body.price)
                     updater['$set']['price'] = req.body.price;
-                
+
                 await listingsCollection.updateOne(matcher, updater);
                 redisClient.publish("services", JSON.stringify({
                     type: '/listing/edit',
