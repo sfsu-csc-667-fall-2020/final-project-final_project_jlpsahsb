@@ -167,7 +167,6 @@ client.connect((error) => {
                 if (req.query.myInquiries === 'true' || req.query.myInquiries === 'True') {
                     result = result.filter((inquiry) => {
                         if (inquiry.accountIdOwner === req.cookies['accountId'] || inquiry.accountIdInterested === req.cookies['accountId']) {
-                            console.log(req.cookies['username'],'\t',inquiry.usernameInterested, '\t', inquiry.usernameOwner)
                             return inquiry;
                         }
                     })
@@ -193,27 +192,82 @@ client.connect((error) => {
             });
     });
 
-
     /*
-    /api/inquiry/delete
-    DELETE
-    required: inquiryID
+    /api/inquiry/reply
+    POST
+    required: inquiryId, message
     */
-    app.delete("/api/inquiry/delete", (req, res) => {
-        return res.send("TODO: IMPLEMENT!");
+    app.post("/api/inquiry/reply", (req, res) => {
+        if (!req.body.inquiryId || !req.body.message) {
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/inquiry/reply',
+                data: {
+                    reason: 'All required fields must be filled out',
+                },
+            }));
+        }
+        if (!req.cookies['accountId']) {
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/inquiry/reply',
+                data: {
+                    reason: 'User must be logged in',
+                },
+            }));
+        }
+        const matcher = {
+            _id: ObjectId(req.body.inquiryId),
+        }
+
+        inquiriesCollection.findOne(matcher)
+            .then(async (result) => {
+                if (!result) {
+                    return res.send(JSON.stringify({
+                        success: false,
+                        responseType: '/api/inquiry/reply',
+                        data: {
+                            reason: 'Inquiry does not exist',
+                        },
+                    }));
+                }
+                if (result.accountIdOwner !== req.cookies['accountId'] &&
+                    result.accountIdInterested !== req.cookies['accountId']) {
+                    return res.send(JSON.stringify({
+                        success: false,
+                        responseType: '/api/inquiry/reply',
+                        data: {
+                            reason: 'You must be a part of this inquiry to reply',
+                        },
+                    }));
+                }
+
+                newMessage = {
+                    sentBy: req.cookies['username'],
+                    message: req.body.message
+                };
+
+                await inquiriesCollection.updateOne(matcher, {$push: {messages: newMessage}});
+
+                return res.send(JSON.stringify({
+                    success: true,
+                    responseType: '/api/inquiry/reply',
+                    data: {
+                        inquiryId: String(result._id),
+                    },
+                }));
+            })
+            .catch((e) => {
+                console.log(e);
+                res.send(JSON.stringify({
+                    success: false,
+                    responseType: '/api/inquiry/reply',
+                    data: {
+                        reason: e,
+                    },
+                }));
+            });
     });
-
-
-    /*
-    /api/inquiry/edit
-    PUT
-    required: inquiryID
-    optional: subject, message
-    */
-    app.put("/api/inquiry/edit", (req, res) => {
-        return res.send("TODO: IMPLEMENT!");
-    });
-
 
     app.listen(port, () => console.log(`Inquiry services listening on port ${port}`));
 });
