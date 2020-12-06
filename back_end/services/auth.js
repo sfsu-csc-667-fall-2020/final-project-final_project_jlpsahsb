@@ -15,8 +15,8 @@ app.use(cookieparser());
 app.use(cors());
 
 const url = 'mongodb://localhost:27017';
-const dbName = 'csc667_final';
-const collection = 'users';
+const databaseName = 'csc667_final';
+const usersCollectionName = 'users';
 
 const client = new MongoClient(url);
 
@@ -25,10 +25,10 @@ client.connect((error) => {
         console.log(error);
         process.exit(1);
     }
-    console.log('Connected to', dbName);
+    console.log('Connected to', databaseName);
 
-    const db = client.db(dbName);
-    const userCollection = db.collection(collection);
+    const db = client.db(databaseName);
+    const usersCollection = db.collection(usersCollectionName);
 
     /*
     /api/account/create
@@ -50,7 +50,7 @@ client.connect((error) => {
             username: req.body.username,
         }
 
-        userCollection.findOne(matcher)
+        usersCollection.findOne(matcher)
             .then( async (result) => {
                 if (result) {
                     return res.send(JSON.stringify({
@@ -67,14 +67,14 @@ client.connect((error) => {
                     firstName: req.body.firstName,
                     lastName: req.body.lastName,
                 }
-                const newUserdb = await userCollection.insertOne(newUser);
+                const newUserDb = await usersCollection.insertOne(newUser);
 
-                if (newUserdb) {
+                if (newUserDb) {
                     return res.send(JSON.stringify({
                         success: true,
                         responseType: '/api/account/create',
                         data: {
-                            accountId: newUserdb.insertedId,
+                            accountId: newUserDb.insertedId,
                         },
                     }));
                 }
@@ -110,10 +110,10 @@ client.connect((error) => {
             username: req.body.username,
             password: req.body.password,
         }
-        userCollection.findOne(matcher)
+        usersCollection.findOne(matcher)
         .then((result) => {
             if (result) {
-                res.cookie('accountId', result._id, { maxAge: 86400 });     // 86400 seconds is 24hrs
+                res.cookie('accountId', result._id, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
                 return res.send(JSON.stringify({
                     success: true,
                     responseType: '/api/account/login',
