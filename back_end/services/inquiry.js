@@ -4,6 +4,8 @@ const { MongoClient, ObjectId } = require('mongodb');
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
+const redis = require('redis');
+const redisClient = redis.createClient({host: '18.191.127.85'});
 
 const app = express();
 const port = 5000;
@@ -98,7 +100,12 @@ client.connect((error) => {
                     ],
                 }
                 const newInquiryDb = await inquiriesCollection.insertOne(newInquiry);
-
+                redisClient.publish("services", JSON.stringify({
+                    type: '/inquiry/create',
+                    inquiryId: newInquiryDb.insertedId,
+                    accountIdOwner: newInquiry.accountIdOwner,
+                    accountIdInterested: newInquiry.accountIdInterested,
+                }));
                 if (newInquiryDb) {
                     return res.send(JSON.stringify({
                         success: true,
@@ -248,7 +255,12 @@ client.connect((error) => {
                 };
 
                 await inquiriesCollection.updateOne(matcher, {$push: {messages: newMessage}});
-
+                redisClient.publish("services", JSON.stringify({
+                    type: '/inquiry/reply',
+                    inquiryId: req.body.inquiryId,
+                    accountIdOwner: result.accountIdOwner,
+                    accountIdInterested: result.accountIdInterested,
+                }));
                 return res.send(JSON.stringify({
                     success: true,
                     responseType: '/api/inquiry/reply',

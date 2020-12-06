@@ -4,6 +4,8 @@ const { MongoClient, ObjectId } = require('mongodb');
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
+const redis = require('redis');
+const redisClient = redis.createClient({host: '18.191.127.85'});
 
 const app = express();
 const port = 6000;
@@ -81,7 +83,10 @@ client.connect((error) => {
                     price: req.body.price,
                 }
                 const newListingDb = await listingsCollection.insertOne(newListing);
-
+                redisClient.publish("services", JSON.stringify({
+                    type: '/listing/create',
+                    listingId: newListingDb.insertedId,
+                }));
                 if (newListingDb) {
                     return res.send(JSON.stringify({
                         success: true,
@@ -210,6 +215,10 @@ client.connect((error) => {
                     }));
                 }
                 await listingsCollection.findOneAndDelete(matcher);
+                redisClient.publish("services", JSON.stringify({
+                    type: '/listing/delete',
+                    listingId: req.body.listingId,
+                }));
                 return res.send(JSON.stringify({
                     success: true,
                     responseType: '/api/listing/delete',
@@ -299,6 +308,10 @@ client.connect((error) => {
                     updater['$set']['price'] = req.body.price;
                 
                 await listingsCollection.updateOne(matcher, updater);
+                redisClient.publish("services", JSON.stringify({
+                    type: '/listing/edit',
+                    listingId: req.body.listingId,
+                }));
                 return res.send(JSON.stringify({
                     success: true,
                     responseType: '/api/listing/edit',
