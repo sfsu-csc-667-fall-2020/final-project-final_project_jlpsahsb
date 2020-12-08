@@ -5,7 +5,9 @@ import { createStore, applyMiddleware } from 'redux';
 import * as serviceWorker from './serviceWorker';
 import rootReducer from './redux/reducers/rootReducer';
 import thunk from 'redux-thunk';
+import Home from './components/Home'
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import {
   BrowserRouter,
@@ -21,6 +23,7 @@ ReactDOM.render(
   <Provider store={store}>
     <React.StrictMode>
       <BrowserRouter>
+      <Route to='/' component={Home}/>
       </BrowserRouter>
     </React.StrictMode>
   </Provider>,
