@@ -6,6 +6,9 @@ const cors = require('cors')
 const cookieparser = require("cookie-parser")
 const redis = require('redis');
 const multer = require('multer')
+const fileSystem = require('fs')
+const crypto = require('crypto')
+const path = require('path');
 
 const redisClient = redis.createClient({ host: '18.191.127.85' });
 const app = express();
@@ -16,7 +19,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieparser());
 app.use(cors());
-//app.use(multer().single('image'));
 
 const url = 'mongodb://18.191.127.85:27017'
 const databaseName = 'csc667_final';
@@ -27,14 +29,26 @@ const client = new MongoClient(url);
 
 const imageStorageInfo = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '../listingImages')
+        cb(null, '../listingImages/temp')
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname);
+        const rawFileName = file.originalname + req.body.itemName + req.body.type +
+            req.body.description + req.body.price;
+        const hashedFileName = crypto.createHash('sha256').update(rawFileName).digest("hex").concat(".")
+            .concat((file.mimetype.split('/')[1]));
+        cb(null, (hashedFileName));
     }
 });
 
 const uploadImage = multer({ storage: imageStorageInfo })
+
+function removeImage(imageName) {
+    fileSystem.unlink(`../listingImages/temp/${imageName}`, (err) => {
+        if (err) {
+            console.log("Error deleting image:", imageName, " Error: ", err)
+        }
+    })
+};
 
 client.connect((error) => {
     if (error) {
@@ -52,9 +66,10 @@ client.connect((error) => {
     POST (MUST SEND VIA FORM-DATA)
     required: itemName, type, picture, description, price
     */
-    app.post("/api/listing/create", uploadImage.single('image'), (req, res) => {
+    app.post("/api/listing/create", uploadImage.single('image'), async (req, res) => {
         if (!req.body.itemName || !req.body.type ||
             !req.body.description || !req.body.price || !req.file) {
+            removeImage(req.file.filename);
             return res.send(JSON.stringify({
                 success: false,
                 responseType: '/api/listing/create',
@@ -64,6 +79,7 @@ client.connect((error) => {
             }));
         }
         if (!req.cookies['accountId']) {
+            removeImage(req.file.filename);
             return res.send(JSON.stringify({
                 success: false,
                 responseType: '/api/listing/create',
@@ -72,13 +88,31 @@ client.connect((error) => {
                 },
             }));
         }
+
+        const exactListingMatcher = {
+            itemName: req.body.itemName,
+            type: req.body.type,
+            description: req.body.description,
+            price: req.body.price,
+        };
+        if (await listingsCollection.findOne(exactListingMatcher)) {
+            removeImage(req.file.filename);
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/listing/create',
+                data: {
+                    reason: 'Cannot create duplicate listing',
+                },
+            }));
+        }
+
         const matcher = {
             _id: ObjectId(req.cookies['accountId']),
         }
-
         usersCollection.findOne(matcher)
             .then(async (result) => {
                 if (!result) {
+                    removeImage(req.file.filename);
                     return res.send(JSON.stringify({
                         success: false,
                         responseType: '/api/listing/create',
@@ -87,6 +121,7 @@ client.connect((error) => {
                         },
                     }));
                 }
+
                 const newListing = {
                     username: result.username,
                     accountId: String(result._id),
@@ -94,11 +129,16 @@ client.connect((error) => {
                     type: req.body.type,
                     description: req.body.description,
                     price: req.body.price,
-                    image: "imageNameHash",
-                    status: "processing"
+                    imageName: req.file.filename,
+                    status: 'processing',
                 }
                 const newListingDb = await listingsCollection.insertOne(newListing);
-                // Send message to Kafka image processing service
+
+                fileSystem.rename(('../listingImages/temp/' + req.file.filename),
+                    ('../listingImages/saved/' + req.file.filename), (error) => {
+                        console.log("Error moving image!");
+                    });
+
                 redisClient.publish("services", JSON.stringify({
                     type: '/listing/create',
                     listingId: newListingDb.insertedId,
@@ -346,6 +386,43 @@ client.connect((error) => {
                     },
                 }));
             });
+    });
+
+    /*
+    /api/listing/image
+    GET
+    required: imageName, size
+    */
+    app.get("/api/listing/image", (req, res) => {
+        if (!req.query.imageName || !req.query.size) {
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/listing/image',
+                data: {
+                    reason: 'All required fields must be filled out',
+                },
+            }));
+        }
+        if (req.query.size != 100 && req.query.size != 500) {
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/listing/image',
+                data: {
+                    reason: 'Request image size must be 100 or 500',
+                },
+            }));
+        }
+        const filePath = `../listingImages/processed/${req.query.size}/${req.query.imageName}`
+        if (!fileSystem.existsSync(filePath)) {
+            return res.send(JSON.stringify({
+                success: false,
+                responseType: '/api/listing/image',
+                data: {
+                    reason: 'Request image size has not been processed',
+                },
+            }));
+        }
+        return res.sendFile(path.resolve(filePath));
     });
 
     app.listen(port, () => console.log(`Listing services listening on port ${port}`));
