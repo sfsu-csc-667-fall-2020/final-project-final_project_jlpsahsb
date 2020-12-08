@@ -8,3 +8,17 @@ TODO:
 6. Mark kafka message as processed
 7. Listen/process for next message
 */
+
+// Image processor (Kafka) running on port 9092
+const kafkaConsumer = require('../kafka/KafkaConsumer.js');
+
+const consumer = new kafkaConsumer(['listing']);
+
+consumer.connect('message', (message) => {
+    console.log('Message recieved on kafka');
+    setTimeout(() => {
+        console.log('Image processed');
+    }, 3000);
+});
+
+consumer.connect();

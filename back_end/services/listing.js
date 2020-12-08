@@ -9,7 +9,10 @@ const multer = require('multer')
 const fileSystem = require('fs')
 const crypto = require('crypto')
 const path = require('path');
+const KafkaProducer = require('../kafka/KafkaProducer.js');
 
+const producer = new KafkaProducer('listing');
+producer.connect(() => console.log('connected to kafka'));
 const redisClient = redis.createClient({ host: '18.191.127.85' });
 const app = express();
 const port = 6000;
@@ -136,9 +139,11 @@ client.connect((error) => {
 
                 fileSystem.rename(('../listingImages/temp/' + req.file.filename),
                     ('../listingImages/saved/' + req.file.filename), (error) => {
-                        console.log("Error moving image!");
+                        if (error)
+                            console.log("Error moving image:", error);
                     });
-
+                
+                producer.send(String(req.file.filename));
                 redisClient.publish("services", JSON.stringify({
                     type: '/listing/create',
                     listingId: newListingDb.insertedId,
