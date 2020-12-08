@@ -5,8 +5,8 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
 const redis = require('redis');
-const redisClient = redis.createClient({host: '18.191.127.85'});
 
+const redisClient = redis.createClient({host: '18.191.127.85'});
 const app = express();
 const port = 5000;
 

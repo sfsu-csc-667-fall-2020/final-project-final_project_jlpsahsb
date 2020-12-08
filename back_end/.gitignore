@@ -1,1 +1,11 @@
 node_modules
+
+# Ensure we keep only the placeholder images, and do not commit any other saved images
+!listingImages/processed/100/placeholder
+!listingImages/processed/500/placeholder
+!listingImages/saved/placeholder
+!listingImages/temp/placeholder
+listingImages/processed/100/*
+listingImages/processed/500/*
+listingImages/saved/*
+listingImages/temp/*
