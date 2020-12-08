@@ -4,6 +4,7 @@ const { MongoClient } = require('mongodb');
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
+const bcrypt = require('bcrypt')
 
 const app = express();
 const port = 4000;
@@ -17,6 +18,7 @@ app.use(cors());
 const url = 'mongodb://18.191.127.85:27017'
 const databaseName = 'csc667_final';
 const usersCollectionName = 'users';
+const saltRounds = 7;
 
 const client = new MongoClient(url);
 
@@ -46,6 +48,7 @@ client.connect((error) => {
                 },
             }));
         }
+        req.body.username = String(req.body.username).toLowerCase();
         const matcher = {
             username: req.body.username,
         }
@@ -61,12 +64,17 @@ client.connect((error) => {
                         },
                     }));
                 }
+                const hashedPassword = bcrypt.hashSync(req.body.password, saltRounds);
+                const formattedFirstName = String(req.body.firstName).charAt(0).toUpperCase() +
+                    String(req.body.firstName).toLowerCase().slice(1);
+                const formattedLastName = String(req.body.lastName).charAt(0).toUpperCase() +
+                    String(req.body.lastName).toLowerCase().slice(1);
                 const newUser = {
                     username: req.body.username,
-                    password: req.body.password,
-                    firstName: req.body.firstName,
-                    lastName: req.body.lastName,
-                }
+                    password: hashedPassword,
+                    firstName: formattedFirstName,
+                    lastName: formattedLastName,
+                };
                 const newUserDb = await usersCollection.insertOne(newUser);
 
                 if (newUserDb) {
@@ -106,41 +114,41 @@ client.connect((error) => {
                 },
             }));
         }
+        req.body.username = String(req.body.username).toLowerCase();
         const matcher = {
-            username: req.body.username,
-            password: req.body.password,
-        }
+            username: req.body.username
+        };
         usersCollection.findOne(matcher)
-        .then((result) => {
-            if (result) {
-                res.cookie('accountId', result._id, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
-                res.cookie('username', req.body.username, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
+            .then((result) => {
+                if (result && bcrypt.compareSync(req.body.password, result.password)) {
+                    res.cookie('accountId', result._id, { maxAge: 86400000 });           // 86400000 ms is 24 hrs
+                    res.cookie('username', req.body.username, { maxAge: 86400000 });     // 86400000 ms is 24 hrs
+                    return res.send(JSON.stringify({
+                        success: true,
+                        responseType: '/api/account/login',
+                        data: {
+                            accountId: result._id,
+                        },
+                    }));
+                }
                 return res.send(JSON.stringify({
-                    success: true,
+                    success: false,
                     responseType: '/api/account/login',
                     data: {
-                        accountId: result._id,
+                        reason: 'Incorrect Username or Password',
                     },
                 }));
-            }
-            return res.send(JSON.stringify({
-                success: false,
-                responseType: '/api/account/login',
-                data: {
-                    reason: 'Incorrect Username or Password',
-                },
-            })); 
-        })
-        .catch((e) => {
-            console.log(e);
-            res.send(JSON.stringify({
-                success: false,
-                responseType: '/api/account/login',
-                data: {
-                    reason: e,
-                },
-            }));
-        });
+            })
+            .catch((e) => {
+                console.log(e);
+                res.send(JSON.stringify({
+                    success: false,
+                    responseType: '/api/account/login',
+                    data: {
+                        reason: e,
+                    },
+                }));
+            });
     });
 
     /*
@@ -150,7 +158,7 @@ client.connect((error) => {
     */
     app.post("/api/account/logout", (req, res) => {
         const accountId = req.cookies['accountId'];
-        if(!accountId) {
+        if (!accountId) {
             return res.send(JSON.stringify({
                 success: false,
                 responseType: '/api/account/logout',
