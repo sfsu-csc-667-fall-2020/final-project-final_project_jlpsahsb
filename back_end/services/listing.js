@@ -143,7 +143,10 @@ client.connect((error) => {
                             console.log("Error moving image:", error);
                     });
                 
-                producer.send(String(req.file.filename));
+                producer.send({
+                    filename: req.file.filename,
+                    listingId: newListingDb.insertedId,
+                });
                 redisClient.publish("services", JSON.stringify({
                     type: '/listing/create',
                     listingId: newListingDb.insertedId,
