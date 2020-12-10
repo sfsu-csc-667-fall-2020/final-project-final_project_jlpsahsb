@@ -16,6 +16,7 @@ const listingsCollectionName = 'listings';
 const client = new MongoClient(url);
 
 client.connect(async (error) => {
+    console.log("Image processor service running on port 9092");
     if (error) {
         console.log(error);
         process.exit(1);
