@@ -16,10 +16,10 @@ apiProxy.on('error', (err, req, res) => {
 
 // Proxy for auth services
 // Auth services to run on port 4000
-app.all('/api/auth*', (req, res) => {
+app.all('/api/account*', (req, res) => {
     console.log(req.path);
     const options = {
-        target: 'http://localhost:4000'
+        target: 'http://auth:4000'
     };
     apiProxy.web(req,res, options);
 });
@@ -29,7 +29,7 @@ app.all('/api/auth*', (req, res) => {
 app.all('/api/inquiry*', (req, res) => {
     console.log(req.path);
     const options = {
-        target: 'http://localhost:5000'
+        target: 'http://inquiry:5000'
     };
     apiProxy.web(req,res, options);
 });
@@ -39,10 +39,10 @@ app.all('/api/inquiry*', (req, res) => {
 app.all('/api/listing*', (req, res) => {
     console.log(req.path);
     const options = {
-        target: 'http://localhost:6000'
+        target: 'http://listing:6000'
     };
     apiProxy.web(req,res, options);
 });
 
 // Start gateway server
-app.listen(port, () => console.log(`Proxy listening on port ${port}`));
+app.listen(port, () => console.log(`Gateway proxy listening on port ${port}`));

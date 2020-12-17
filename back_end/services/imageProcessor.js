@@ -1,4 +1,3 @@
-// Image processor (Kafka) running on port 9092
 const kafkaConsumer = require('../kafka/KafkaConsumer.js');
 const resizeImg = require('resize-img');
 const fs = require('fs');
@@ -6,17 +5,16 @@ const path = require('path');
 const redis = require('redis');
 const { MongoClient, ObjectId } = require('mongodb');
 
-const redisClient = redis.createClient({ host: '18.191.127.85' });
+const redisClient = redis.createClient({ host: 'redis' });
 const consumer = new kafkaConsumer(['listing']);
 
-const url = 'mongodb://18.191.127.85:27017'
+const url = 'mongodb://mongo:27017'
 const databaseName = 'csc667_final';
 const listingsCollectionName = 'listings';
 
 const client = new MongoClient(url);
 
 client.connect(async (error) => {
-    console.log("Image processor service running on port 9092");
     if (error) {
         console.log(error);
         process.exit(1);
@@ -25,6 +23,7 @@ client.connect(async (error) => {
     const db = client.db(databaseName);
     const listingsCollection = db.collection(listingsCollectionName);
 
+    console.log('Image Processor listening via Kafka');
     consumer.on('message', async (message) => {
         console.log('Message recieved on kafka');
 

@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cookieparser());
 app.use(cors());
 
-const url = 'mongodb://18.191.127.85:27017'
+const url = 'mongodb://mongo:27017'
 const databaseName = 'csc667_final';
 const usersCollectionName = 'users';
 const saltRounds = 7;

@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 const redis = require('redis');
 
 const webSocketServer = new WebSocket.Server({ port: 4001 });
-const redisClient = redis.createClient({ host: '18.191.127.85' });
+const redisClient = redis.createClient({ host: 'redis' });
 
 webSocketServer.on('connection', (webSocketClient) => {
     //When a client connects, it will send a message with the form `{accountId: accountId, username: username}`. 
@@ -24,12 +24,12 @@ redisClient.on('message', (channel, message) => {
         case '/listing/create':
         case '/listing/delete':
         case '/listing/edit':
-            console.log('/listing: \n\t', message);
+            console.log(`${JSON.parse(message)['type']} \n\t`, message);
             broadcast(message);
             break;
         case '/inquiry/create':
         case '/inquiry/reply':
-            console.log('/inquiry: \n\t', message);
+            console.log(`${JSON.parse(message)['type']} \n\t`, message);
             webSocketServer.clients.forEach((webSocketClient) => {
                 if (webSocketClient['accountId'] == JSON.parse(message)['accountIdOwner'] ||
                     webSocketClient['accountId'] == JSON.parse(message)['accountIdInterested']) {

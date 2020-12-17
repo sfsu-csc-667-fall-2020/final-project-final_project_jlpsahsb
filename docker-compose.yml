@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   zookeeper:
     image: wurstmeister/zookeeper
@@ -10,8 +10,10 @@ services:
     image : wurstmeister/kafka
     ports:
       - "9092:9092"
+    depends_on:
+      - zookeeper
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: "9092"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     networks:
@@ -23,5 +25,115 @@ services:
     command: redis-server --appendonly yes
     networks:
       - webnet
+  mongo:
+    image: mongo
+    ports: 
+      - "27017-27019:27017-27019"
+    restart: always
+    command: --bind_ip_all
+    networks:
+      - webnet
+  frontEndServer:
+    image: pedrosoutosfsu/frontend
+    ports:
+      - "3001:3001"
+    networks:
+      - webnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  gateway:
+    image: pedrosoutosfsu/gateway
+    ports:
+      - "3000:3000"
+    networks:
+      - webnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  websocket:
+    image: pedrosoutosfsu/websocket
+    ports:
+      - "4001:4001"
+    depends_on: 
+      - redis
+    networks:
+      - webnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  auth:
+    image: pedrosoutosfsu/auth
+    ports:
+      - "4000:4000"
+    depends_on: 
+      - mongo
+    networks:
+      - webnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  listing:
+    image: pedrosoutosfsu/listing
+    ports:
+      - "6000:6000"
+    depends_on: 
+      - mongo
+      - kafka
+      - redis
+    networks:
+      - webnet
+    volumes:
+      - hd:/back_end/listingImages/temp
+      - hd:/back_end/listingImages/saved
+      - hd:/back_end/listingImages/processed/100
+      - hd:/back_end/listingImages/processed/500
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  inquiry:
+    image: pedrosoutosfsu/inquiry
+    ports:
+      - "5000:5000"
+    depends_on: 
+      - mongo
+      - redis
+    networks:
+      - webnet
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  imageProcessor:
+    image: pedrosoutosfsu/imageprocessor
+    depends_on: 
+      - mongo
+      - kafka
+      - redis
+    networks:
+      - webnet
+    volumes:
+      - hd:/back_end/listingImages/temp
+      - hd:/back_end/listingImages/saved
+      - hd:/back_end/listingImages/processed/100
+      - hd:/back_end/listingImages/processed/500
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+volumes:
+  hd:
 networks:
   webnet:
