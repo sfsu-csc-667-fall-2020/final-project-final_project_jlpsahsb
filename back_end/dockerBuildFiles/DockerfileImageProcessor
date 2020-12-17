@@ -1,0 +1,14 @@
+FROM node:10-alpine
+
+WORKDIR /back_end/services
+
+COPY ../package*.json /back_end
+
+RUN mkdir ../kafka
+COPY ../kafka/KafkaConsumer.js /back_end/kafka
+
+RUN npm install
+
+COPY ../services/imageProcessor.js /back_end/services
+
+CMD ["node", "imageProcessor.js"]

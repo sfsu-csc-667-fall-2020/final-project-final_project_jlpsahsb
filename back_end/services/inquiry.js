@@ -6,7 +6,7 @@ const cors = require('cors')
 const cookieparser = require("cookie-parser")
 const redis = require('redis');
 
-const redisClient = redis.createClient({host: '18.191.127.85'});
+const redisClient = redis.createClient({host:'redis'});
 const app = express();
 const port = 5000;
 
@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(cookieparser());
 app.use(cors());
 
-const url = 'mongodb://18.191.127.85:27017'
+const url = 'mongodb://mongo:27017'
 const databaseName = 'csc667_final';
 const usersCollectionName = 'users';
 const listingsCollectionName = 'listings';

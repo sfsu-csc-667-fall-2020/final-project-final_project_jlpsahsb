@@ -1,0 +1,13 @@
+FROM node:10-alpine
+
+WORKDIR /back_end/services
+
+COPY ../package*.json /back_end
+
+RUN npm install
+
+COPY ../services/auth.js /back_end/services
+
+EXPOSE 4000
+
+CMD ["node", "auth.js"]

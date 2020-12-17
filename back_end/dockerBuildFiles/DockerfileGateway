@@ -1,0 +1,13 @@
+FROM node:10-alpine
+
+WORKDIR /back_end
+
+COPY ../package*.json /back_end
+
+RUN npm install
+
+COPY ../gateway.js /back_end
+
+EXPOSE 3000
+
+CMD ["node", "gateway.js"]

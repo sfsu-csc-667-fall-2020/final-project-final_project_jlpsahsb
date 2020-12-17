@@ -4,7 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "npm run pull:all && docker swarm init && docker stack deploy -c ../docker-compose.yml simpleCraig",
+    
+    "pull:all": "npm run pull:base && npm run pull:dependencies",
+    "pull:base": "docker pull wurstmeister/kafka:latest && docker pull wurstmeister/zookeeper:latest && docker pull redis:5.0.4 && docker pull mongo:latest",
+    "pull:dependencies": "docker pull pedrosoutosfsu/gateway:latest && docker pull pedrosoutosfsu/websocket:latest && docker pull pedrosoutosfsu/auth:latest && docker pull pedrosoutosfsu/listing:latest && docker pull pedrosoutosfsu/inquiry:latest && docker pull pedrosoutosfsu/imageprocessor:latest",
+    
+    "build:all": "npm run build:auth && npm run build:frontend && npm run build:gateway && npm run build:imageprocessor && npm run build:inquiry && npm run build:listing && npm run build:websocket",
+    "build:auth": "docker build -t pedrosoutosfsu/auth --file ./dockerBuildFiles/DockerfileAuth .",
+    "build:frontend": "docker build -t pedrosoutosfsu/frontend --file ./dockerBuildFiles/DockerfileFrontend .",
+    "build:gateway": "docker build -t pedrosoutosfsu/gateway --file ./dockerBuildFiles/DockerfileGateway .",
+    "build:imageprocessor": "docker build -t pedrosoutosfsu/imageprocessor --file ./dockerBuildFiles/DockerfileImageProcessor .",
+    "build:inquiry": "docker build -t pedrosoutosfsu/inquiry --file ./dockerBuildFiles/DockerfileInquiry .",
+    "build:listing": "docker build -t pedrosoutosfsu/listing --file ./dockerBuildFiles/DockerfileListing .",
+    "build:websocket": "docker build -t pedrosoutosfsu/websocket --file ./dockerBuildFiles/DockerfileWebsocket ."
   },
   "author": "",
   "license": "ISC",
@@ -15,10 +28,12 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
+    "http-proxy": "^1.18.1",
     "kafka-node": "^4.1.1",
     "mongodb": "^3.6.3",
     "multer": "^1.4.2",
     "redis": "^3.0.2",
-    "resize-img": "^2.0.0"
+    "resize-img": "^2.0.0",
+    "ws": "^7.4.1"
   }
 }

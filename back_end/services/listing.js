@@ -13,7 +13,7 @@ const KafkaProducer = require('../kafka/KafkaProducer.js');
 
 const producer = new KafkaProducer('listing');
 producer.connect(() => console.log('connected to kafka'));
-const redisClient = redis.createClient({ host: '18.191.127.85' });
+const redisClient = redis.createClient({ host: 'redis' });
 const app = express();
 const port = 6000;
 
@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use(cookieparser());
 app.use(cors());
 
-const url = 'mongodb://18.191.127.85:27017'
+const url = 'mongodb://mongo:27017'
 const databaseName = 'csc667_final';
 const usersCollectionName = 'users';
 const listingsCollectionName = 'listings';
@@ -426,7 +426,7 @@ client.connect((error) => {
                 success: false,
                 responseType: '/api/listing/image',
                 data: {
-                    reason: 'Request image size has not been processed',
+                    reason: 'Requested image size has not been processed',
                 },
             }));
         }

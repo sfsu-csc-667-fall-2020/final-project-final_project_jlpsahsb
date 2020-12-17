@@ -1,0 +1,16 @@
+FROM node:10-alpine
+
+WORKDIR /back_end/services
+
+COPY ../package*.json /back_end
+
+RUN mkdir ../kafka
+COPY ../kafka/KafkaProducer.js /back_end/kafka
+
+RUN npm install
+
+COPY ../services/listing.js /back_end/services
+
+EXPOSE 6000
+
+CMD ["node", "listing.js"]

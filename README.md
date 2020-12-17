@@ -1,49 +1,36 @@
-# Final Project
-
-## Amazon EC2  
-### Connect  
+# Amazon EC2  
+### Connect via SSH:  
 `ssh -i "csc667key.pem" ubuntu@ec2-18-191-127-85.us-east-2.compute.amazonaws.com`  
 
----------
+<br>
+<br>
+<br>
+  
+# Running Application on EC2
+### Install Docker on EC2  
+Install Docker using:  
+`https://docs.docker.com/engine/install/ubuntu/`  
 
-## MongoDB (https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)  
-### Install
-Import the public key used by the package management system  
-`wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -`
+Install docker-compose:  
+`sudo apt install docker-compose`  
 
-Add Sources  
-`echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list`
+### Get Application Code from Github  
+`git clone https://github.com/sfsu-csc-667-fall-2020/final-project-final_project_jlpsahsb.git`  
 
-Reload the local package database  
-`sudo apt update`
+### Run  
+Deploy Application (Ensure you `cd` into back_end folder):  
+ `npm run deploy`  
 
-Install the MongoDB packages  
-`sudo apt install -y mongodb-org`
+<br>
+<br>
+<br>
+  
+# MISC DOCKER COMMANDS
+### Leave swarm:  
+`docker swarm leave --force`
 
-Change bindIP to 0.0.0.0 in mongod.conf  
-`sudo vim /etc/mongod.conf`
+### Delte all images:  
+`docker image prune -a`  
 
-Start and verify the service  
-`sudo systemctl start mongod`  
-`sudo systemctl status mongod`
-
-Enable the service start on every reboot  
-`sudo systemctl enable mongod`
-
-Restart MongoDB  
-`sudo systemctl restart mongod`
-
-(IF NEEDED) Stop MongoDB  
-`sudo systemctl stop mongod`
-
-(IF NEEDED) Restart MongoDB  
-`sudo systemctl restart mongod`
-or  
-`sudo service mongod restart`  
-
----------
-
-## Redis  
-Start Sever  
-`redis-server`
-
+### Delte all volumes:  
+`docker volume prune`  
