@@ -8,7 +8,7 @@
     
     "pull:all": "npm run pull:base && npm run pull:dependencies",
     "pull:base": "docker pull wurstmeister/kafka:latest && docker pull wurstmeister/zookeeper:latest && docker pull redis:5.0.4 && docker pull mongo:latest",
-    "pull:dependencies": "docker pull pedrosoutosfsu/gateway:latest && docker pull pedrosoutosfsu/websocket:latest && docker pull pedrosoutosfsu/auth:latest && docker pull pedrosoutosfsu/listing:latest && docker pull pedrosoutosfsu/inquiry:latest && docker pull pedrosoutosfsu/imageprocessor:latest",
+    "pull:dependencies": "docker pull pedrosoutosfsu/gateway:latest && docker pull pedrosoutosfsu/websocket:latest && docker pull pedrosoutosfsu/auth:latest && docker pull pedrosoutosfsu/listing:latest && docker pull pedrosoutosfsu/inquiry:latest && docker pull pedrosoutosfsu/imageprocessor:latest && docker pull pedrosoutosfsu/frontend:latest",
     
     "build:all": "npm run build:auth && npm run build:frontend && npm run build:gateway && npm run build:imageprocessor && npm run build:inquiry && npm run build:listing && npm run build:websocket",
     "build:auth": "docker build -t pedrosoutosfsu/auth --file ./dockerBuildFiles/DockerfileAuth .",

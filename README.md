@@ -1,29 +1,28 @@
 # Amazon EC2  
 
 ### EC2 IP Address:  
-`3.138.117.39`  
+`18.219.76.225`  
 
 ### Connect via SSH:  
-`ssh -i "csc667.pem" ubuntu@ec2-3-138-117-39.us-east-2.compute.amazonaws.com`  
+`ssh -i "csc667.pem" ec2-user@ec2-18-219-76-225.us-east-2.compute.amazonaws.com`  
 
 <br>
 <br>
 <br>
   
-# Running Application on EC2  
-### Install Docker on EC2  
-Set up Docker repositoy before downloading Docker using:  
-`sudo apt-get update`  
-`sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common`  
-`curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -`  
-`sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"`
-
-Install Docker using:  
-`sudo apt-get update`  
-`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose npm`
+# Running Application on EC2 (Use Amazon Linux 2)  
+### Install Docker/Git/Docker-Compose on EC2  
+`sudo su -`  
+`yum update`  
+`yum install docker`  
+`service docker start`  
+`usermod -a -G docker ec2-user`  
+`curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose`  
+`chmod +x /usr/local/bin/docker-compose`  
+`yum install -y git`  
 
 Login to Docker using:
-`sudo docker login`  
+`docker login`  
  
 ### Get Application Code from Github  
 `git clone https://github.com/sfsu-csc-667-fall-2020/final-project-final_project_jlpsahsb.git`  
@@ -34,7 +33,10 @@ Deploy Application (Ensure you `cd` into back_end folder):
 `sudo npm run pull:all`  
 `sudo docker swarm init`  
 `sudo docker stack deploy -c ../docker-compose.yml simpleCraig`  
- `sudo npm run deploy`  
+
+OR ~
+
+`sudo npm run deploy`  
 
 <br>
 <br>
@@ -49,3 +51,6 @@ Deploy Application (Ensure you `cd` into back_end folder):
 
 ### Delte all volumes:  
 `docker volume prune`  
+
+### Kill all containers:  
+`docker container kill $(docker ps -q)`  
