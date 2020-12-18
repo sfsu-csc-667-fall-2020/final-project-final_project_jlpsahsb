@@ -1,10 +1,10 @@
 # Amazon EC2  
 
 ### EC2 IP Address:  
-`TBD`  
+`3.138.117.39`  
 
 ### Connect via SSH:  
-`TBD`  
+`ssh -i "csc667.pem" ubuntu@ec2-3-138-117-39.us-east-2.compute.amazonaws.com`  
 
 <br>
 <br>
